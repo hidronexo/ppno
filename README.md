@@ -293,3 +293,51 @@ García Martínez, A. (2019-2026).
 PPNO: Pressurized Pipe Network Optimizer
 https://github.com/andresgciamtez/ppno
 ```
+
+## Interfaz gráfica
+
+PPNO incluye una interfaz nativa para preparar, validar y ejecutar problemas de
+optimización sin editar manualmente el fichero `.ext`. La aplicación mantiene el
+flujo de trabajo del programa de consola: el modelo EPANET y el catálogo externo
+siguen siendo las fuentes de datos, y se usa exactamente el mismo motor de
+validación y optimización.
+
+La interfaz está pensada para trabajar dentro del entorno Conda de PPNO. En
+Windows, active el entorno, instale el proyecto en modo editable y arranque la
+aplicación:
+
+```powershell
+conda activate ppno
+python -m pip install -e ".[dev]"
+ppno-gui
+```
+
+También puede iniciarse sin usar el comando instalado:
+
+```powershell
+conda activate ppno
+python -m ppno.gui
+```
+
+El uso recomendado es el siguiente:
+
+1. Cree un proyecto nuevo o abra un problema `.ext` existente.
+2. Seleccione el modelo EPANET `.inp` y el catálogo de tuberías `.cat`. La GUI
+   obtiene del INP los nudos y las tuberías, y muestra las alternativas del
+   catálogo sin modificar ese fichero externo.
+3. En **Tuberías**, active los conductos que se optimizarán y asigne su grupo de
+   catálogo. En **Presiones**, active los nudos de control y defina la presión
+   mínima. Se pueden seleccionar varias filas para aplicar valores en bloque.
+4. Marque, si procede, los algoritmos opcionales de la etapa 2. La etapa 1
+   (Unit Headloss y FLS-H) se ejecuta siempre.
+5. Guarde y pulse **Validar**. La optimización permanece deshabilitada hasta que
+   PPNO valida el `.ext`, el INP y el catálogo. Cualquier edición posterior exige
+   validar de nuevo.
+6. Pulse **Optimizar**. El cálculo se ejecuta en segundo plano; las pestañas
+   **Ejecución** y **Solución** muestran respectivamente el registro, el resumen
+   de algoritmos, el coste final y los diámetros seleccionados.
+
+Los resultados `.scn` de las metaheurísticas se generan junto al modelo INP con
+el mismo nombre y formato que en la interfaz de línea de comandos. La GUI no
+crea ni utiliza un entorno virtual independiente: siempre ejecuta PPNO con el
+intérprete del entorno Conda desde el que se inició.

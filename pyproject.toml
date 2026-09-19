@@ -34,6 +34,9 @@ dev = ["pytest>=8.0"]
 [project.scripts]
 ppno = "ppno.ppno:main"
 
+[project.gui-scripts]
+ppno-gui = "ppno.gui:main"
+
 [tool.setuptools]
 packages = ["ppno"]
 include-package-data = true
