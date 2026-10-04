@@ -1,5 +1,6 @@
 import ppno.constants as c
 
+
 def test_algorithm_ids():
     assert c.ALGORITHM_UH == 0
     assert c.ALGORITHM_DE == 1

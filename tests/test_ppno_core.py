@@ -1,15 +1,18 @@
-import pytest
-import numpy as np
-import sys
-import os
 import logging
 from pathlib import Path
-from unittest.mock import MagicMock, patch
-from ppno.ppno import Optimization, main
+from unittest.mock import patch
+
+import numpy as np
+import pytest
+
 from ppno.constants import (
-    ALGORITHM_UH, ALGORITHM_DE, ALGORITHM_DA, ALGORITHM_NSGA2, 
-    ALGORITHM_MOEAD, ALGORITHM_MACO, ALGORITHM_PSO, MAX_RETRIES
+    ALGORITHM_DE,
+    ALGORITHM_MACO,
+    ALGORITHM_PSO,
+    MAX_RETRIES,
 )
+from ppno.ppno import Optimization, main
+
 
 @pytest.fixture
 def mock_et():

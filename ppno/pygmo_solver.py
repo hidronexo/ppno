@@ -6,7 +6,7 @@ optimization, supporting algorithms like NSGA-II, MOEAD, MACO, and PSO.
 
 import logging
 from time import perf_counter
-from typing import Tuple, Optional, List, Any
+from typing import Any, List, Optional, Tuple
 
 import numpy as np
 import pygmo as pg

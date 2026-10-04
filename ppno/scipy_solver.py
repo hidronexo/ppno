@@ -5,12 +5,12 @@ adapted for the pipe network optimization problem.
 """
 
 import logging
-from typing import Optional
 from time import perf_counter
+from typing import Optional
+
 import numpy as np
-from .constants import (
-    ALGORITHM_DE, ALGORITHM_DA, MAX_ALGORITHM_TIME, PENALTY_VALUE
-)
+
+from .constants import ALGORITHM_DA, ALGORITHM_DE, MAX_ALGORITHM_TIME, PENALTY_VALUE
 
 # Logger configuration
 logger = logging.getLogger(__name__)

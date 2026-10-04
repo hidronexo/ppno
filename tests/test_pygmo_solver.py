@@ -1,9 +1,10 @@
-import pytest
-import numpy as np
 from unittest.mock import MagicMock, patch
-from ppno.pygmo_solver import (
-    evolve_ppno, PPNOProblem, nsga2, moead, maco, nspso
-)
+
+import numpy as np
+import pytest
+
+from ppno.pygmo_solver import PPNOProblem, evolve_ppno, maco, moead, nsga2, nspso
+
 
 @pytest.fixture(autouse=True)
 def mock_pg():

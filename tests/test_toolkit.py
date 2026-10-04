@@ -1,4 +1,5 @@
 import pytest
+
 try:
     from entoolkit import toolkit as et
     # Support for newer versions where functions moved to legacy

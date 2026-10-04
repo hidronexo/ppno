@@ -1,8 +1,11 @@
-import pytest
-import numpy as np
 from unittest.mock import MagicMock, patch
-from ppno.scipy_solver import solve_scipy, SolverTimeoutError
-from ppno.constants import ALGORITHM_DE, ALGORITHM_DA
+
+import numpy as np
+import pytest
+
+from ppno.constants import ALGORITHM_DA, ALGORITHM_DE
+from ppno.scipy_solver import solve_scipy
+
 
 @pytest.fixture
 def mock_opt():

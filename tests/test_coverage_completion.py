@@ -1,14 +1,14 @@
-import pytest
-import numpy as np
-import logging
 import sys
-import os
-from pathlib import Path
 from unittest.mock import MagicMock, patch
+
+import numpy as np
+import pytest
+
 from ppno import section_parser as sp
+from ppno.local_refiner import LocalRefiner
 from ppno.ppno import Optimization, main
 from ppno.pygmo_solver import PPNOProblem, evolve_ppno
-from ppno.local_refiner import LocalRefiner
+
 
 @pytest.fixture
 def mock_et():

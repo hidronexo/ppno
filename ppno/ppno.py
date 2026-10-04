@@ -6,16 +6,17 @@ parsing, semantic validation, EPANET hydraulic simulation state, and delegates
 the optimization process to specific heuristic and metaheuristic solvers.
 """
 
-import os
-import sys
 import argparse
 import logging
-from time import perf_counter, localtime, strftime
+import os
+import sys
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional, Union, Any
+from time import localtime, perf_counter, strftime
+from typing import Any, Dict, List, NoReturn, Optional, Tuple, Union, cast
 
 import numpy as np
 import pygmo as pg
+
 try:
     from entoolkit import toolkit as et
     # Support for newer versions where functions moved to legacy
@@ -42,15 +43,27 @@ logger = logging.getLogger(__name__)
 # Constants
 if __package__:
     from .constants import (
-        ALGORITHM_UH, ALGORITHM_DE, ALGORITHM_DA, ALGORITHM_NSGA2,
-        ALGORITHM_MOEAD, ALGORITHM_MACO, ALGORITHM_PSO, MAX_RETRIES,
-        DEFAULT_CONFIG
+        ALGORITHM_DA,
+        ALGORITHM_DE,
+        ALGORITHM_MACO,
+        ALGORITHM_MOEAD,
+        ALGORITHM_NSGA2,
+        ALGORITHM_PSO,
+        ALGORITHM_UH,
+        DEFAULT_CONFIG,
+        MAX_RETRIES,
     )
 else:
     from ppno.constants import (
-        ALGORITHM_UH, ALGORITHM_DE, ALGORITHM_DA, ALGORITHM_NSGA2,
-        ALGORITHM_MOEAD, ALGORITHM_MACO, ALGORITHM_PSO, MAX_RETRIES,
-        DEFAULT_CONFIG
+        ALGORITHM_DA,
+        ALGORITHM_DE,
+        ALGORITHM_MACO,
+        ALGORITHM_MOEAD,
+        ALGORITHM_NSGA2,
+        ALGORITHM_PSO,
+        ALGORITHM_UH,
+        DEFAULT_CONFIG,
+        MAX_RETRIES,
     )
 
 ALGORITHM_BY_NAME = {
@@ -139,7 +152,7 @@ class Optimization:
         try:
             et.ENopen(str(self.inp_file), rpt)
         except Exception as e:
-            raise ValueError(f"Line {inp_line_num}: Failed to load EPANET model {self.inp_file.name} ({str(e)})")
+            raise ValueError(f"Line {inp_line_num}: Failed to load EPANET model {self.inp_file.name} ({str(e)})") from e
         
         et.ENopenH()
         try:
@@ -172,7 +185,7 @@ class Optimization:
             raise
 
         self.simulation_cycles = 0
-        self.results = []
+        self.results: List[Dict[str, Any]] = []
         logger.info("-" * 80)
 
     def _resolve_problem_path(self, raw_path: str) -> Path:
@@ -219,9 +232,11 @@ class Optimization:
         options = sections.get('OPTIONS', [])
         for line_num, content in options:
             tokens = parser.line_to_tuple(content)
-            if not tokens: continue
-            tokens = [t for t in tokens if t != '=']
-            if not tokens: continue
+            if not tokens:
+                continue
+            tokens = tuple(t for t in tokens if t != '=')
+            if not tokens:
+                continue
             key = tokens[0].upper().replace('_', '')
             if key in supported_options:
                 for val in tokens[1:]:
@@ -273,22 +288,24 @@ class Optimization:
                 errors.append(f"Line {line_num}: Invalid pressure value '{min_p}'")
 
         # Check pipe-size group consistency (strictly increasing diameter)
-        temp_sizes = {}
+        temp_sizes: Dict[str, List[Dict[str, Any]]] = {}
         for line_num, content in pipe_catalog_lines:
             tokens = parser.line_to_tuple(content)
-            if not tokens: continue
+            if not tokens:
+                continue
             if tokens[0].startswith('['):
                 continue
             if len(tokens) < 4:
                 errors.append(f"Line {line_num}: Invalid pipe catalog entry. Expected 'GROUP DIAMETER ROUGHNESS PRICE'")
                 continue
             try:
-                sn, d, r, p = tokens[0], float(tokens[1]), float(tokens[2]), float(tokens[3])
+                sn, d, _r, p = tokens[0], float(tokens[1]), float(tokens[2]), float(tokens[3])
             except ValueError:
                 errors.append(f"Line {line_num}: Invalid numeric values in pipe catalog group '{tokens[0]}'")
                 continue
             
-            if sn not in temp_sizes: temp_sizes[sn] = []
+            if sn not in temp_sizes:
+                temp_sizes[sn] = []
             temp_sizes[sn].append({'d': d, 'p': p, 'line': line_num})
 
         for sn, items in temp_sizes.items():
@@ -307,13 +324,13 @@ class Optimization:
         self.max_retries = MAX_RETRIES
         seen_algorithms = set()
 
-        for line_num, content in options_lines:
+        for _line_num, content in options_lines:
             tokens = parser.line_to_tuple(content)
             if not tokens:
                 continue
             
             # Filter out '=' if present
-            tokens = [t for t in tokens if t != '=']
+            tokens = tuple(t for t in tokens if t != '=')
             if not tokens:
                 continue
 
@@ -342,7 +359,7 @@ class Optimization:
         """Parses the PIPES section."""
         dt = np.dtype([('link_idx', 'i4'), ('id', 'U16'), ('length', 'f4'), ('group', 'U16')])
         data = []
-        for line_num, content in pipe_lines:
+        for _line_num, content in pipe_lines:
             tokens = parser.line_to_tuple(content)
             pipe_id, group_name = tokens[0], tokens[1]
             link_idx = et.ENgetlinkindex(pipe_id)
@@ -356,7 +373,7 @@ class Optimization:
         """Parses the PRESSURES section."""
         dt = np.dtype([('node_idx', 'i4'), ('id', 'U16'), ('min_pressure', 'f4')])
         data = []
-        for line_num, content in pressure_lines:
+        for _line_num, content in pressure_lines:
             tokens = parser.line_to_tuple(content)
             node_id, min_p = tokens[0], tokens[1]
             node_idx = et.ENgetnodeindex(node_id)
@@ -371,7 +388,7 @@ class Optimization:
         required_groups = set(str(p['group']) for p in self.pipes)
 
         raw_data: Dict[str, List[Tuple[float, float, float]]] = {s: [] for s in required_groups}
-        for line_num, content in pipe_size_lines:
+        for _line_num, content in pipe_size_lines:
             tokens = parser.line_to_tuple(content)
             if tokens and tokens[0].startswith('['):
                 continue
@@ -661,7 +678,7 @@ class Optimization:
         logger.info(header)
         logger.info("-" * 80)
         
-        aggregated = {}
+        aggregated: Dict[str, Dict[str, Any]] = {}
         for res in self.results:
             name = res['Algorithm']
             if name not in aggregated:
@@ -704,7 +721,7 @@ class Optimization:
         logger.info("*** UNIT HEADLOSS HEURISTIC ***")
         self.set_x(np.zeros(self.dimension, dtype=np.int32))
         while True:
-            status, sorted_hls = self.check(mode='UH')
+            status, sorted_hls = cast(Tuple[bool, np.ndarray], self.check(mode='UH'))
             if status:
                 return self.get_x().copy()
 
@@ -805,7 +822,7 @@ class Optimization:
 class PPNOArgumentParser(argparse.ArgumentParser):
     """Argument parser that prints full help when command-line parsing fails."""
 
-    def error(self, message: str) -> None:
+    def error(self, message: str) -> NoReturn:
         self.print_usage(sys.stderr)
         self.exit(2, f"{self.prog}: error: {message}\n\n{self.format_help()}")
 

@@ -5,18 +5,18 @@ from __future__ import annotations
 import hashlib
 import logging
 import os
-from pathlib import Path
 import queue
 import tempfile
 import threading
 import tkinter as tk
+from functools import partial
+from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 from tkinter.scrolledtext import ScrolledText
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple, cast
 
 from .ppno import Optimization
 from .section_parser import SectionParser
-
 
 ALGORITHMS = ("DE", "DA", "NSGA2", "MOEAD", "MACO", "PSO")
 TEMPLATE = """; Proyecto PPNO
@@ -139,7 +139,7 @@ def _section_rows(path: Path, section: str) -> List[Tuple[str, ...]]:
 def network_ids(path: Path) -> Tuple[List[str], List[str]]:
     """Return junction and pipe IDs from an EPANET INP without opening the toolkit."""
     result: Dict[str, List[str]] = {"JUNCTIONS": [], "PIPES": []}
-    seen = {name: set() for name in result}
+    seen: Dict[str, Set[str]] = {name: set() for name in result}
     section = ""
     for raw in read_text(Path(path)).splitlines():
         data = raw.split(";", 1)[0].strip()
@@ -202,7 +202,7 @@ def portable_reference(path: Path, project_path: Path) -> str:
         return str(path)
 
 
-def project_payload(path: Path) -> Dict[str, object]:
+def project_payload(path: Path) -> Dict[str, Any]:
     """Load the fields edited by the GUI from an existing .ext project."""
     path = Path(path)
     parser = SectionParser(path)
@@ -220,14 +220,14 @@ def project_payload(path: Path) -> Dict[str, object]:
 
     pipes = []
     for _, raw in sections.get("PIPES", []):
-        tokens = parser.line_to_tuple(raw)
-        if len(tokens) >= 2:
-            pipes.append((tokens[0], tokens[1]))
+        fields = parser.line_to_tuple(raw)
+        if len(fields) >= 2:
+            pipes.append((fields[0], fields[1]))
     pressures = []
     for _, raw in sections.get("PRESSURES", []):
-        tokens = parser.line_to_tuple(raw)
-        if len(tokens) >= 2:
-            pressures.append((tokens[0], tokens[1]))
+        fields = parser.line_to_tuple(raw)
+        if len(fields) >= 2:
+            pressures.append((fields[0], fields[1]))
 
     inp_raw = first_value("INP")
     catalog_raw = first_value("PIPE_CATALOG")
@@ -422,7 +422,7 @@ class ProjectEditor:
         self.notebook.add(tab, text=title)
         frame = ttk.Frame(tab)
         frame.pack(fill="both", expand=True)
-        tree = ttk.Treeview(frame, columns=columns, show="headings", selectmode="extended")
+        tree = ttk.Treeview(frame, columns=list(columns), show="headings", selectmode="extended")
         labels = {
             "use": "Usar",
             "id": "ID EPANET",
@@ -436,8 +436,8 @@ class ProjectEditor:
         tree.configure(yscrollcommand=scroll.set)
         tree.pack(side="left", fill="both", expand=True)
         scroll.pack(side="right", fill="y")
-        tree.bind("<Double-1>", lambda event, widget=tree: self._edit_tree_cell(widget, event))
-        tree.bind("<space>", lambda event, widget=tree: self._toggle_selected(widget))
+        tree.bind("<Double-1>", partial(self._edit_tree_cell, tree))
+        tree.bind("<space>", partial(self._toggle_selected_event, tree))
 
         controls = ttk.Frame(tab, padding=(0, 8))
         controls.pack(fill="x")
@@ -466,7 +466,7 @@ class ProjectEditor:
         tab = ttk.Frame(self.notebook, padding=10)
         self.notebook.add(tab, text="Catálogo")
         columns = ("group", "diameter", "roughness", "price")
-        self.catalog_tree = ttk.Treeview(tab, columns=columns, show="headings")
+        self.catalog_tree = ttk.Treeview(tab, columns=list(columns), show="headings")
         for name, label in zip(
             columns, ("Grupo", "Diámetro", "Rugosidad", "Precio unitario")
         ):
@@ -588,7 +588,10 @@ class ProjectEditor:
             return
         if column_index == 1:
             return
-        x, y, width, height = tree.bbox(item, column_name)
+        bbox = tree.bbox(item, column_name)
+        if not bbox:
+            return
+        x, y, width, height = bbox
         values = list(tree.item(item, "values"))
         entry = ttk.Entry(tree)
         entry.insert(0, values[column_index])
@@ -605,6 +608,9 @@ class ProjectEditor:
         entry.bind("<Return>", finish)
         entry.bind("<FocusOut>", finish)
         entry.bind("<Escape>", lambda _event: entry.destroy())
+
+    def _toggle_selected_event(self, tree: ttk.Treeview, _event: tk.Event) -> None:
+        self._toggle_selected(tree)
 
     def _toggle_selected(self, tree: ttk.Treeview) -> None:
         for item in tree.selection():
@@ -803,7 +809,7 @@ class ProjectEditor:
                 return
         optimization: Optional[Optimization] = None
         try:
-            optimization = Optimization(self.path)
+            optimization = Optimization(cast(Path, self.path))
         except Exception as exc:
             self.validated_fingerprint = None
             messagebox.showerror("Validación fallida", str(exc))
@@ -893,9 +899,9 @@ class ProjectEditor:
         if not terminal and self.running:
             self.root.after(100, self._poll_events)
 
-    def _show_payload(self, payload: Dict[str, object]) -> None:
+    def _show_payload(self, payload: Dict[str, Any]) -> None:
         self.running = False
-        for result in payload["results"]:  # type: ignore[union-attr]
+        for result in payload["results"]:
             row = result
             self.summary_tree.insert(
                 "",
@@ -909,7 +915,7 @@ class ProjectEditor:
                     row["Cost"],
                 ),
             )
-        for row in payload["pipes"]:  # type: ignore[union-attr]
+        for row in payload["pipes"]:
             self.solution_tree.insert("", "end", values=row)
         self.cost_text.set(
             f"Coste total: {float(payload['cost']):.2f}   |   Mejor origen: {payload['best_algorithm']}"

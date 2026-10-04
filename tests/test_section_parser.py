@@ -1,8 +1,9 @@
+from unittest.mock import mock_open, patch
+
 import pytest
-import numpy as np
-from unittest.mock import MagicMock, patch, mock_open
+
 from ppno.section_parser import SectionParser
-from pathlib import Path
+
 
 @pytest.fixture
 def example_ext_file(tmp_path):
