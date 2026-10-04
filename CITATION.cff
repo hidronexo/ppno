@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use PPNO in your work, please cite it using these metadata."
+title: "PPNO: Pressurized Pipe Network Optimizer"
+type: software
+version: 0.3.3
+license: Apache-2.0
+repository-code: "https://github.com/hidronexo/ppno"
+authors:
+  - name: "HIDRONEXO"
+    email: "opensource@hidronexo.com"

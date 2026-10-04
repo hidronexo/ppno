@@ -1,5 +1,7 @@
 include README.md
 include LICENSE
+include NOTICE
+include CITATION.cff
 include pyproject.toml
 
 recursive-include ppno/examples *.ext *.cat *.inp

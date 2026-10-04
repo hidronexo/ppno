@@ -1,19 +1,20 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires = ["setuptools>=77.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "ppno"
 version = "0.3.3"
 authors = [
-  { name="Andrés García Martínez", email="ppnoptimizer@gmail.com" },
+  { name="HIDRONEXO", email="opensource@hidronexo.com" },
 ]
 description = "Pressurized Pipe Network Optimizer"
 readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
 requires-python = ">=3.8"
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
     "Topic :: Scientific/Engineering",
 ]
@@ -28,8 +29,8 @@ dependencies = [
 dev = ["pytest>=8.0"]
 
 [project.urls]
-"Homepage" = "https://github.com/andresgciamtez/ppno"
-"Bug Tracker" = "https://github.com/andresgciamtez/ppno/issues"
+"Homepage" = "https://github.com/hidronexo/ppno"
+"Bug Tracker" = "https://github.com/hidronexo/ppno/issues"
 
 [project.scripts]
 ppno = "ppno.ppno:main"
@@ -40,3 +41,49 @@ ppno-gui = "ppno.gui:main"
 [tool.setuptools]
 packages = ["ppno"]
 include-package-data = true
+
+[tool.pixi.workspace]
+channels = ["conda-forge"]
+platforms = ["win-64"]
+
+[tool.pixi.dependencies]
+python = ">=3.11,<3.14"
+numpy = ">=1.20"
+scipy = ">=1.7"
+pygmo = ">=2.18"
+pytest = "*"
+ruff = "*"
+mypy = "*"
+commitizen = "*"
+
+[tool.pixi.pypi-dependencies]
+ppno = { path = ".", editable = true }
+entoolkit = { git = "https://github.com/hidronexo/entoolkit.git" }
+
+[tool.pixi.tasks]
+test = "pytest -q"
+lint = "ruff check ppno tests"
+typecheck = "mypy ppno"
+release = "cz bump"
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+version_provider = "pep621"
+tag_format = "v$version"
+major_version_zero = true
+update_changelog_on_bump = true
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+
+[tool.ruff]
+target-version = "py38"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E701", "E702"]
