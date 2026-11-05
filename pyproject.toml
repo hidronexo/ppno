@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ppno"
-version = "0.3.3"
+version = "0.4.0"
 authors = [
   { name="HIDRONEXO", email="opensource@hidronexo.com" },
 ]
@@ -61,6 +61,7 @@ ppno = { path = ".", editable = true }
 entoolkit = { git = "https://github.com/hidronexo/entoolkit.git" }
 
 [tool.pixi.tasks]
+gui = "python -m ppno.gui"
 test = "pytest -q"
 lint = "ruff check ppno tests"
 typecheck = "mypy ppno"
