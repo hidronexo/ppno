@@ -1,3 +1,9 @@
+## v0.4.1 (2026-11-12)
+
+### Feat
+
+- adopt hnx project files
+
 ## v0.4.0 (2026-11-05)
 
 ### Feat
