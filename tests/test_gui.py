@@ -17,7 +17,7 @@ from ppno.gui import (
 
 
 def test_save_text_replaces_document_atomically(tmp_path):
-    path = tmp_path / "problem.ext"
+    path = tmp_path / "problem.hnx"
     path.write_text("old", encoding="utf-8")
 
     save_text(path, "new\n")
@@ -29,6 +29,10 @@ def test_render_project_preserves_comments_and_unknown_sections():
     source = """; heading
 [TITLE]
 Case A
+
+[PROJECT]
+application = ppno
+name = Test project
 
 [INP]
 old.inp ; retained note
@@ -96,9 +100,13 @@ def test_catalog_rows_and_project_payload(tmp_path):
     inp.write_text("[JUNCTIONS]\nJ1 1 1\n[PIPES]\nP1 J1 J1 1 1 1 0 Open\n")
     catalog = tmp_path / "pipes.cat"
     catalog.write_text("; comment\nPVC 100 120 10.5\nPVC 150 120 15.0\n")
-    project = tmp_path / "problem.ext"
+    project = tmp_path / "problem.hnx"
     project.write_text(
-        """[INP]
+        """[PROJECT]
+application = ppno
+name = Test project
+
+[INP]
 network.inp
 [OPTIONS]
 Algorithms DE, PSO
@@ -169,7 +177,7 @@ def test_run_optimization_emits_log_and_structured_result(tmp_path):
     events = queue.Queue()
 
     with patch("ppno.gui.Optimization", FakeOptimization):
-        run_optimization(tmp_path / "problem.ext", events)
+        run_optimization(tmp_path / "problem.hnx", events)
 
     emitted = []
     while not events.empty():

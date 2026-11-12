@@ -20,8 +20,9 @@ from .section_parser import SectionParser
 
 ALGORITHMS = ("DE", "DA", "NSGA2", "MOEAD", "MACO", "PSO")
 TEMPLATE = """; Proyecto PPNO
-[TITLE]
-Nuevo problema de optimización
+[PROJECT]
+application = ppno
+name = Nuevo problema de optimización
 
 [INP]
 
@@ -203,7 +204,7 @@ def portable_reference(path: Path, project_path: Path) -> str:
 
 
 def project_payload(path: Path) -> Dict[str, Any]:
-    """Load the fields edited by the GUI from an existing .ext project."""
+    """Load the fields edited by the GUI from an existing .hnx project."""
     path = Path(path)
     parser = SectionParser(path)
     sections = parser.read()
@@ -331,7 +332,7 @@ class ProjectEditor:
         self.edit_toolbar.pack(fill="x")
         for label, command in (
             ("Nuevo", self.new),
-            ("Abrir .ext…", self.open),
+            ("Abrir .hnx…", self.open),
             ("Guardar", self.save),
             ("Guardar como…", self.save_as),
             ("Validar", self.validate),
@@ -524,7 +525,7 @@ class ProjectEditor:
         self._update_title()
 
     def _update_title(self) -> None:
-        name = self.path.name if self.path else "sin título.ext"
+        name = self.path.name if self.path else "sin título.hnx"
         marker = " *" if self.dirty else ""
         self.root.title(f"Hidronexo PPNO - {name}{marker}")
 
@@ -717,7 +718,7 @@ class ProjectEditor:
     def open(self) -> None:
         if not self.confirm_discard():
             return
-        filename = filedialog.askopenfilename(filetypes=(("Problema PPNO", "*.ext"), ("Todos", "*.*")))
+        filename = filedialog.askopenfilename(filetypes=(("Proyecto Hidronexo", "*.hnx"), ("Todos", "*.*")))
         if filename:
             self.load(Path(filename))
 
@@ -786,7 +787,7 @@ class ProjectEditor:
 
     def save_as(self) -> bool:
         filename = filedialog.asksaveasfilename(
-            defaultextension=".ext", filetypes=(("Problema PPNO", "*.ext"),)
+            defaultextension=".hnx", filetypes=(("Proyecto Hidronexo", "*.hnx"),)
         )
         if not filename:
             return False

@@ -88,7 +88,7 @@ class Optimization:
         find the best pipe diameters from the available pipe-size groups.
 
     Attributes:
-        problem_file (Path): Path to the .ext problem definition file.
+        problem_file (Path): Path to the .hnx problem definition file.
         inp_file (Path): Path to the original EPANET .inp file.
         rpt_file (Path): Path to the generated EPANET .rpt file.
         algorithm (int): Chosen optimization algorithm ID.
@@ -108,16 +108,16 @@ class Optimization:
     def __init__(self, problem_file: Union[str, Path]):
         """Initialize the optimization problem and perform full semantic validation.
 
-        Reads the problem definition from the `.ext` file, locates the associated EPANET 
-        `.inp` model, and validates all entities (pipes, nodes, pipe sizes) to ensure 
+        Reads the problem definition from the `.hnx` file, locates the associated EPANET
+        `.inp` model, and validates all entities (pipes, nodes, pipe sizes) to ensure
         hydraulic and logical consistency before proceeding with optimization.
 
         Args:
-            problem_file (Union[str, Path]): Absolute or relative path to the `.ext` 
+            problem_file (Union[str, Path]): Absolute or relative path to the `.hnx`
                 configuration file containing the problem definition.
 
         Raises:
-            FileNotFoundError: If the specified `.ext` file or its referenced `.inp` model 
+            FileNotFoundError: If the specified `.hnx` file or its referenced `.inp` model
                 cannot be found.
             ValueError: If the configuration validation fails due to syntax errors, missing 
                 hydraulic entities, or logical inconsistencies (e.g., non-monotonic pipe sizes).
@@ -129,10 +129,14 @@ class Optimization:
         parser = sp.SectionParser(self.problem_file)
         sections = parser.read()
 
-        # 1. Verify INP Section
+        project = self._key_values(sections, 'PROJECT')
+        if project.get('application', ('', 0))[0].lower() != 'ppno':
+            raise ValueError("[PROJECT] application must be ppno")
+        if not project.get('name', ('', 0))[0]:
+            raise ValueError("[PROJECT] name is required")
+
         if 'INP' not in sections or not sections['INP']:
             raise ValueError(f"Line 1: Mandatory [INP] section is missing or empty in {self.problem_file.name}")
-        
         inp_line_num, inp_raw_path = sections['INP'][0]
         inp_path = self._resolve_problem_path(inp_raw_path)
             
@@ -189,7 +193,7 @@ class Optimization:
         logger.info("-" * 80)
 
     def _resolve_problem_path(self, raw_path: str) -> Path:
-        """Resolve a path from CWD, the .ext directory, or by basename there."""
+        """Resolve a path from CWD, the .hnx directory, or by basename there."""
         resolved_path = Path(raw_path)
         if resolved_path.is_absolute():
             return resolved_path
@@ -201,6 +205,21 @@ class Optimization:
         ]
         return next((candidate for candidate in candidates if candidate.exists()), candidates[-1])
 
+    @staticmethod
+    def _key_values(
+        sections: Dict[str, List[Tuple[int, str]]], section: str
+    ) -> Dict[str, Tuple[str, int]]:
+        """Return lower-case key/value pairs from a project section."""
+        result: Dict[str, Tuple[str, int]] = {}
+        for line_num, raw in sections.get(section, []):
+            if '=' not in raw:
+                raise ValueError(f"Line {line_num}: [{section}] expected key = value")
+            key, value = (part.strip() for part in raw.split('=', 1))
+            if not key or not value:
+                raise ValueError(f"Line {line_num}: [{section}] expected key = value")
+            result[key.lower()] = (value.strip('"\''), line_num)
+        return result
+
     def _load_pipe_catalog_file(self, sections: Dict[str, List[Tuple[int, str]]]) -> Path:
         """Resolve the external pipe catalog referenced by [PIPE_CATALOG]."""
         catalog_lines = sections.get('PIPE_CATALOG', [])
@@ -209,7 +228,6 @@ class Optimization:
         if len(catalog_lines) > 1:
             line_num, _ = catalog_lines[1]
             raise ValueError(f"Line {line_num}: [PIPE_CATALOG] accepts exactly one file path")
-
         catalog_line_num, catalog_raw_path = catalog_lines[0]
         catalog_path = self._resolve_problem_path(catalog_raw_path)
         if not catalog_path.exists():
@@ -834,12 +852,12 @@ def build_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description=(
             "Pressurized Pipe Network Optimizer (PPNO)\n\n"
-            "Optimize pipe diameters for an EPANET model using a .ext problem file."
+            "Optimize pipe diameters for an EPANET model using a .hnx problem file."
         ),
         epilog=(
             "Examples:\n"
-            "  ppno ppno/examples/example_1.ext\n"
-            "  python -m ppno.ppno ppno/examples/example_1.ext"
+            "  ppno ppno/examples/example_1.hnx\n"
+            "  python -m ppno.ppno ppno/examples/example_1.hnx"
         ),
     )
 
@@ -859,7 +877,7 @@ def main(argv: Optional[List[str]] = None) -> None:
     parser.add_argument(
         "problem_file",
         nargs="?",
-        help="Path to the .ext problem definition file.",
+        help="Path to the .hnx problem definition file.",
     )
 
     args = parser.parse_args(_normalize_argv(argv))

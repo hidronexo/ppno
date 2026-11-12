@@ -21,7 +21,7 @@ The optimizer is built around a two-stage workflow:
 - Feasible-solution seeding for metaheuristics.
 - `.scn` result files for successful Stage 2 algorithms.
 - Semantic validation for missing entities, invalid pipe catalog entries, and option names.
-- Multi-encoding support for `.ext` files: UTF-8, UTF-16, CP1252, then Latin-1 fallback.
+- Multi-encoding support for `.hnx` files: UTF-8, UTF-16, CP1252, then Latin-1 fallback.
 
 ## Installation
 
@@ -53,13 +53,13 @@ pip install .
 Run an optimization problem:
 
 ```bash
-ppno path/to/problem.ext
+ppno path/to/problem.hnx
 ```
 
 Equivalent module form:
 
 ```bash
-python -m ppno.ppno path/to/problem.ext
+python -m ppno.ppno path/to/problem.hnx
 ```
 
 If no argument is provided, PPNO prints the command help and exits successfully.
@@ -95,13 +95,25 @@ The `.inp` file remains unchanged.
 
 ## Problem File Format
 
-PPNO uses a plain-text `.ext` file with bracketed sections. Semicolon comments
+PPNO uses a plain-text `.hnx` file with bracketed sections. Semicolon comments
 are supported.
+
+### `[PROJECT]`
+
+Required. Identifies the Hidronexo application and the project name.
+
+```ini
+[PROJECT]
+application = ppno
+name = Optimization of the Hanoi Network
+```
+
+`version`, `author`, `company` and `date` are optional.
 
 ### `[INP]`
 
 Required. Path to the EPANET `.inp` model. Relative paths are resolved from the
-current working directory, the `.ext` file directory, or the `.ext` file
+current working directory, the `.hnx` file directory, or the `.hnx` file
 directory using only the `.inp` file name.
 
 ```ini
@@ -202,7 +214,7 @@ required pressure in the same units used by the EPANET model.
 ### `[PIPE_CATALOG]`
 
 Required. Path to the external pipe catalog file. Relative paths are resolved
-from the current working directory, the `.ext` file directory, or the `.ext`
+from the current working directory, the `.hnx` file directory, or the `.hnx`
 file directory using only the catalog file name.
 
 ```ini
@@ -297,7 +309,7 @@ https://github.com/andresgciamtez/ppno
 ## Interfaz gráfica
 
 PPNO incluye una interfaz nativa para preparar, validar y ejecutar problemas de
-optimización sin editar manualmente el fichero `.ext`. La aplicación mantiene el
+optimización sin editar manualmente el fichero `.hnx`. La aplicación mantiene el
 flujo de trabajo del programa de consola: el modelo EPANET y el catálogo externo
 siguen siendo las fuentes de datos, y se usa exactamente el mismo motor de
 validación y optimización.
@@ -321,7 +333,7 @@ python -m ppno.gui
 
 El uso recomendado es el siguiente:
 
-1. Cree un proyecto nuevo o abra un problema `.ext` existente.
+1. Cree un proyecto nuevo o abra un problema `.hnx` existente.
 2. Seleccione el modelo EPANET `.inp` y el catálogo de tuberías `.cat`. La GUI
    obtiene del INP los nudos y las tuberías, y muestra las alternativas del
    catálogo sin modificar ese fichero externo.
@@ -331,7 +343,7 @@ El uso recomendado es el siguiente:
 4. Marque, si procede, los algoritmos opcionales de la etapa 2. La etapa 1
    (Unit Headloss y FLS-H) se ejecuta siempre.
 5. Guarde y pulse **Validar**. La optimización permanece deshabilitada hasta que
-   PPNO valida el `.ext`, el INP y el catálogo. Cualquier edición posterior exige
+   PPNO valida el `.hnx`, el INP y el catálogo. Cualquier edición posterior exige
    validar de nuevo.
 6. Pulse **Optimizar**. El cálculo se ejecuta en segundo plano; las pestañas
    **Ejecución** y **Solución** muestran respectivamente el registro, el resumen

@@ -33,9 +33,9 @@ def mock_et():
         yield m
 
 def test_ppno_missing_branches_corrected(mock_et, tmp_path):
-    ext = tmp_path / "comp.ext"; (tmp_path / "t.inp").write_text("")
+    ext = tmp_path / "comp.hnx"; (tmp_path / "t.inp").write_text("")
     # Valid minimal content
-    ext.write_text("[INP]\nt.inp\n[PIPES]\np1 s1\n[PIPE_CATALOG]\npipe.cat\n[PRESSURES]\nn1 20")
+    ext.write_text("[PROJECT]\napplication = ppno\nname = Test project\n\n[INP]\nt.inp\n[PIPES]\np1 s1\n[PIPE_CATALOG]\npipe.cat\n[PRESSURES]\nn1 20")
     
     opt = Optimization(ext)
     assert opt.config['MaxTime'] == 120
@@ -78,20 +78,20 @@ def test_pygmo_evolve_recovers_after_failed_trial():
              assert f[0] == 100.0
 
 def test_validations(mock_et, tmp_path):
-    ext = tmp_path / "valid.ext"; (tmp_path / "t.inp").write_text("")
+    ext = tmp_path / "valid.hnx"; (tmp_path / "t.inp").write_text("")
     
     # 1. Missing INP
-    ext.write_text("[OPTIONS]\nALGORITHM DE")
+    ext.write_text("[PROJECT]\napplication = ppno\nname = Test project\n\n[OPTIONS]\nALGORITHM DE")
     with pytest.raises(ValueError, match="Mandatory .INP. section is missing"):
         Optimization(ext)
     
     # 2. Unknown Algorithm
-    ext.write_text("[INP]\nt.inp\n[OPTIONS]\nALGORITHM MAGIC\n[PIPE_CATALOG]\npipe.cat")
+    ext.write_text("[PROJECT]\napplication = ppno\nname = Test project\n\n[INP]\nt.inp\n[OPTIONS]\nALGORITHM MAGIC\n[PIPE_CATALOG]\npipe.cat")
     with pytest.raises(ValueError, match="Unknown algorithm 'MAGIC'"):
         Optimization(ext)
     
     # 3. Missing Pipe/Node
-    ext.write_text("[INP]\nt.inp\n[PIPES]\nmissing_p s1\n[PIPE_CATALOG]\npipe.cat\n[PRESSURES]\nmissing_n 20")
+    ext.write_text("[PROJECT]\napplication = ppno\nname = Test project\n\n[INP]\nt.inp\n[PIPES]\nmissing_p s1\n[PIPE_CATALOG]\npipe.cat\n[PRESSURES]\nmissing_n 20")
     mock_et.ENgetlinkindex.side_effect = Exception("Not found")
     mock_et.ENgetnodeindex.side_effect = Exception("Not found")
     with pytest.raises(ValueError, match="Pipe 'missing_p' not found"):
@@ -101,13 +101,13 @@ def test_validations(mock_et, tmp_path):
 
     # 4. Monotonicity Diameter
     (tmp_path / "pipe.cat").write_text("s1 200 0.1 10\ns1 100 0.1 20\n")
-    ext.write_text("[INP]\nt.inp\n[PIPES]\np1 s1\n[PIPE_CATALOG]\npipe.cat")
+    ext.write_text("[PROJECT]\napplication = ppno\nname = Test project\n\n[INP]\nt.inp\n[PIPES]\np1 s1\n[PIPE_CATALOG]\npipe.cat")
     with pytest.raises(ValueError, match="Diameter must be strictly increasing"):
         Optimization(ext)
 
     # 5. Price Anomaly (Warning)
     (tmp_path / "pipe.cat").write_text("s1 100 0.1 20\ns1 200 0.1 10\n")
-    ext.write_text("[INP]\nt.inp\n[PIPES]\np1 s1\n[PIPE_CATALOG]\npipe.cat")
+    ext.write_text("[PROJECT]\napplication = ppno\nname = Test project\n\n[INP]\nt.inp\n[PIPES]\np1 s1\n[PIPE_CATALOG]\npipe.cat")
     with patch('ppno.ppno.logger.warning') as m_warn:
         Optimization(ext)
         m_warn.assert_called()
@@ -117,8 +117,8 @@ def test_cli_help_and_errors(tmp_path):
         main()
     assert e.value.code == 0
     
-    p = tmp_path / "fatal.ext"
-    p.write_text("[INP]\nmissing.inp")
+    p = tmp_path / "fatal.hnx"
+    p.write_text("[PROJECT]\napplication = ppno\nname = Test project\n\n[INP]\nmissing.inp")
     with patch.object(sys, 'argv', ['ppno', str(p)]), pytest.raises(SystemExit) as e:
         main()
     assert e.value.code == 1
@@ -136,9 +136,9 @@ def test_section_parser_extra(tmp_path):
     assert sp.SectionParser.tuple_to_line(("a", 1)) == "a    1"
 
 def test_optimization_full_flow(mock_et, tmp_path):
-    ext = tmp_path / "full.ext"; (tmp_path / "t.inp").write_text("")
+    ext = tmp_path / "full.hnx"; (tmp_path / "t.inp").write_text("")
     (tmp_path / "pipe.cat").write_text("s1 100 0.1 20\ns1 200 0.1 10\n")
-    ext.write_text("[INP]\nt.inp\n[OPTIONS]\nALGORITHMS DE\n[PIPES]\np1 s1\n[PIPE_CATALOG]\npipe.cat\n[PRESSURES]\nn1 20")
+    ext.write_text("[PROJECT]\napplication = ppno\nname = Test project\n\n[INP]\nt.inp\n[OPTIONS]\nALGORITHMS DE\n[PIPES]\np1 s1\n[PIPE_CATALOG]\npipe.cat\n[PRESSURES]\nn1 20")
     
     opt = Optimization(ext)
     opt.set_x(np.array([0]))
@@ -156,15 +156,15 @@ def test_optimization_full_flow(mock_et, tmp_path):
         assert opt.solve() is None
 
 def test_optimization_options_variants(mock_et, tmp_path):
-    ext = tmp_path / "opt.ext"; (tmp_path / "t.inp").write_text("")
-    ext.write_text("[INP]\nt.inp\n[OPTIONS]\nALGORITHMS DE PSO\n[PIPES]\np1 s1\n[PIPE_CATALOG]\npipe.cat\n[PRESSURES]\nn1 20")
+    ext = tmp_path / "opt.hnx"; (tmp_path / "t.inp").write_text("")
+    ext.write_text("[PROJECT]\napplication = ppno\nname = Test project\n\n[INP]\nt.inp\n[OPTIONS]\nALGORITHMS DE PSO\n[PIPES]\np1 s1\n[PIPE_CATALOG]\npipe.cat\n[PRESSURES]\nn1 20")
     opt = Optimization(ext)
     assert len(opt.algorithms) == 2
     assert opt.config['MaxTime'] == 120
 
 def test_all_pygmo_algorithms(mock_et, tmp_path):
-    ext = tmp_path / "pygmo.ext"; (tmp_path / "t.inp").write_text("")
-    ext.write_text("[INP]\nt.inp\n[PIPES]\np1 s1\n[PIPE_CATALOG]\npipe.cat\n[PRESSURES]\nn1 20")
+    ext = tmp_path / "pygmo.hnx"; (tmp_path / "t.inp").write_text("")
+    ext.write_text("[PROJECT]\napplication = ppno\nname = Test project\n\n[INP]\nt.inp\n[PIPES]\np1 s1\n[PIPE_CATALOG]\npipe.cat\n[PRESSURES]\nn1 20")
     opt = Optimization(ext)
     
     from ppno import pygmo_solver
@@ -175,8 +175,8 @@ def test_all_pygmo_algorithms(mock_et, tmp_path):
         pygmo_solver.nspso(opt)
 
 def test_all_scipy_algorithms(mock_et, tmp_path):
-    ext = tmp_path / "scipy.ext"; (tmp_path / "t.inp").write_text("")
-    ext.write_text("[INP]\nt.inp\n[PIPES]\np1 s1\n[PIPE_CATALOG]\npipe.cat\n[PRESSURES]\nn1 20")
+    ext = tmp_path / "scipy.hnx"; (tmp_path / "t.inp").write_text("")
+    ext.write_text("[PROJECT]\napplication = ppno\nname = Test project\n\n[INP]\nt.inp\n[PIPES]\np1 s1\n[PIPE_CATALOG]\npipe.cat\n[PRESSURES]\nn1 20")
     opt = Optimization(ext)
     
     from ppno import scipy_solver
@@ -194,8 +194,8 @@ def test_all_scipy_algorithms(mock_et, tmp_path):
         assert np.array_equal(scipy_solver.solve_scipy(opt, ALGORITHM_DA), [0])
 
 def test_scipy_timeout(mock_et, tmp_path):
-    ext = tmp_path / "timeout.ext"; (tmp_path / "t.inp").write_text("")
-    ext.write_text("[INP]\nt.inp\n[PIPES]\np1 s1\n[PIPE_CATALOG]\npipe.cat\n[PRESSURES]\nn1 20")
+    ext = tmp_path / "timeout.hnx"; (tmp_path / "t.inp").write_text("")
+    ext.write_text("[PROJECT]\napplication = ppno\nname = Test project\n\n[INP]\nt.inp\n[PIPES]\np1 s1\n[PIPE_CATALOG]\npipe.cat\n[PRESSURES]\nn1 20")
     opt = Optimization(ext)
     from ppno import scipy_solver
     from ppno.constants import ALGORITHM_DE
@@ -237,8 +237,8 @@ def test_section_parser_read_section(tmp_path):
     assert parser.read_section("S3") == []
 
 def test_print_methods(mock_et, tmp_path, caplog):
-    ext = tmp_path / "print.ext"; (tmp_path / "t.inp").write_text("")
-    ext.write_text("[INP]\nt.inp\n[PIPES]\np1 s1\n[PIPE_CATALOG]\npipe.cat\n[PRESSURES]\nn1 20")
+    ext = tmp_path / "print.hnx"; (tmp_path / "t.inp").write_text("")
+    ext.write_text("[PROJECT]\napplication = ppno\nname = Test project\n\n[INP]\nt.inp\n[PIPES]\np1 s1\n[PIPE_CATALOG]\npipe.cat\n[PRESSURES]\nn1 20")
     opt = Optimization(ext)
     opt.results = [{'Algorithm': 'Test', 'Attempt': 1, 'Success': 'YES', 'Time (s)': '1.0', 'Simulations': 10, 'Cost': '100.0'}]
     opt._print_summary()
@@ -262,31 +262,31 @@ def test_local_refiner_improvement(mock_et):
         assert sol[0] == 1
 
 def test_ppno_validation_errors(mock_et, tmp_path):
-    ext = tmp_path / "errors.ext"; (tmp_path / "t.inp").write_text("")
+    ext = tmp_path / "errors.hnx"; (tmp_path / "t.inp").write_text("")
     # 1. Invalid pipe definition
-    ext.write_text("[INP]\nt.inp\n[PIPES]\np1\n[PIPE_CATALOG]\npipe.cat\n[PRESSURES]\nn1 20")
+    ext.write_text("[PROJECT]\napplication = ppno\nname = Test project\n\n[INP]\nt.inp\n[PIPES]\np1\n[PIPE_CATALOG]\npipe.cat\n[PRESSURES]\nn1 20")
     with pytest.raises(ValueError, match="Invalid pipe definition"):
         Optimization(ext)
     # 2. group not in pipe sizes
-    ext.write_text("[INP]\nt.inp\n[PIPES]\np1 s2\n[PIPE_CATALOG]\npipe.cat\n[PRESSURES]\nn1 20")
+    ext.write_text("[PROJECT]\napplication = ppno\nname = Test project\n\n[INP]\nt.inp\n[PIPES]\np1 s2\n[PIPE_CATALOG]\npipe.cat\n[PRESSURES]\nn1 20")
     with pytest.raises(ValueError, match="Pipe-size group .s2. not defined in pipe catalog"):
         Optimization(ext)
     # 3. Invalid pressure definition
-    ext.write_text("[INP]\nt.inp\n[PIPES]\np1 s1\n[PIPE_CATALOG]\npipe.cat\n[PRESSURES]\nn1")
+    ext.write_text("[PROJECT]\napplication = ppno\nname = Test project\n\n[INP]\nt.inp\n[PIPES]\np1 s1\n[PIPE_CATALOG]\npipe.cat\n[PRESSURES]\nn1")
     with pytest.raises(ValueError, match="Invalid pressure definition"):
         Optimization(ext)
     # 4. Invalid pressure value
-    ext.write_text("[INP]\nt.inp\n[PIPES]\np1 s1\n[PIPE_CATALOG]\npipe.cat\n[PRESSURES]\nn1 X")
+    ext.write_text("[PROJECT]\napplication = ppno\nname = Test project\n\n[INP]\nt.inp\n[PIPES]\np1 s1\n[PIPE_CATALOG]\npipe.cat\n[PRESSURES]\nn1 X")
     with pytest.raises(ValueError, match="Invalid pressure value .X."):
         Optimization(ext)
 
 def test_ppno_file_not_found():
     with pytest.raises(FileNotFoundError, match="Problem file not found"):
-        Optimization("non_existent.ext")
+        Optimization("non_existent.hnx")
 
 def test_scipy_objective_penalty(mock_et, tmp_path):
-    ext = tmp_path / "penalty.ext"; (tmp_path / "t.inp").write_text("")
-    ext.write_text("[INP]\nt.inp\n[PIPES]\np1 s1\n[PIPE_CATALOG]\npipe.cat\n[PRESSURES]\nn1 20")
+    ext = tmp_path / "penalty.hnx"; (tmp_path / "t.inp").write_text("")
+    ext.write_text("[PROJECT]\napplication = ppno\nname = Test project\n\n[INP]\nt.inp\n[PIPES]\np1 s1\n[PIPE_CATALOG]\npipe.cat\n[PRESSURES]\nn1 20")
     opt = Optimization(ext)
     from ppno import scipy_solver
     from ppno.constants import ALGORITHM_DE
@@ -297,27 +297,27 @@ def test_scipy_objective_penalty(mock_et, tmp_path):
             scipy_solver.solve_scipy(opt, ALGORITHM_DE)
 
 def test_new_robust_validations(mock_et, tmp_path):
-    ext = tmp_path / "new_errors.ext"; (tmp_path / "t.inp").write_text("")
+    ext = tmp_path / "new_errors.hnx"; (tmp_path / "t.inp").write_text("")
     
     # 1. Unsupported numeric option
-    ext.write_text("[INP]\nt.inp\n[OPTIONS]\nMAXRETRIES abc\n[PIPE_CATALOG]\npipe.cat")
+    ext.write_text("[PROJECT]\napplication = ppno\nname = Test project\n\n[INP]\nt.inp\n[OPTIONS]\nMAXRETRIES abc\n[PIPE_CATALOG]\npipe.cat")
     with pytest.raises(ValueError, match="Unsupported option 'MAXRETRIES'"):
         Optimization(ext)
         
     # 2. Unsupported refiner option
-    ext.write_text("[INP]\nt.inp\n[OPTIONS]\nREFINER_WORSENING xyz\n[PIPE_CATALOG]\npipe.cat")
+    ext.write_text("[PROJECT]\napplication = ppno\nname = Test project\n\n[INP]\nt.inp\n[OPTIONS]\nREFINER_WORSENING xyz\n[PIPE_CATALOG]\npipe.cat")
     with pytest.raises(ValueError, match="Unsupported option 'REFINER_WORSENING'"):
         Optimization(ext)
         
     # 3. Malformed pipe sizes line (too short)
     (tmp_path / "pipe.cat").write_text("s1 100 0.1\n")
-    ext.write_text("[INP]\nt.inp\n[PIPES]\np1 s1\n[PIPE_CATALOG]\npipe.cat\n[PRESSURES]\nn1 20")
+    ext.write_text("[PROJECT]\napplication = ppno\nname = Test project\n\n[INP]\nt.inp\n[PIPES]\np1 s1\n[PIPE_CATALOG]\npipe.cat\n[PRESSURES]\nn1 20")
     with pytest.raises(ValueError, match="Invalid pipe catalog entry"):
         Optimization(ext)
 
     # 4. Invalid numeric value in pipe sizes
     (tmp_path / "pipe.cat").write_text("s1 100 0.1 error\n")
-    ext.write_text("[INP]\nt.inp\n[PIPES]\np1 s1\n[PIPE_CATALOG]\npipe.cat\n[PRESSURES]\nn1 20")
+    ext.write_text("[PROJECT]\napplication = ppno\nname = Test project\n\n[INP]\nt.inp\n[PIPES]\np1 s1\n[PIPE_CATALOG]\npipe.cat\n[PRESSURES]\nn1 20")
     with pytest.raises(ValueError, match="Invalid numeric values in pipe catalog group 's1'"):
         Optimization(ext)
 

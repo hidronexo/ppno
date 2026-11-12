@@ -1,17 +1,16 @@
-[TITLE]
-; Free text title for the optimization case.
-Optimization of the New York Network (Murphy, Simpson & Dandy, 1993)
+[PROJECT]
+application = ppno
+name = Optimization of the New York Network (Murphy, Simpson & Dandy, 1993)
 
 [INP]
 ; EPANET .inp model file. Relative paths may be written from the current
-; working directory or from this .ext file location.
-./examples/NYT.inp
+; working directory or from this .hnx file location.
+NYT.inp
 
 [OPTIONS]
 ; Optional section. If Algorithm is omitted, PPNO only runs the mandatory
 ; Unit Headloss heuristic and FLS-H local refinement.
 ; Available algorithms: DE DA NSGA2 MOEAD MACO PSO
-Algorithm DE
 
 [PIPE_CATALOG]
 ; Pipe catalog file with group, diameter, roughness and price columns.
@@ -67,4 +66,3 @@ example_2.cat
 20    110.546
 
 [END]
-

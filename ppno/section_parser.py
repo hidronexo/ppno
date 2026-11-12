@@ -1,7 +1,7 @@
 """Module for reading and writing sections of header-based text files.
 
 This module provides the SectionParser class to handle files with sections
-delimited by [HEADER] labels, similar to EPANET .ext files.
+delimited by [HEADER] labels, similar to Hidronexo .hnx files.
 """
 
 from pathlib import Path

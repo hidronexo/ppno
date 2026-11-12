@@ -40,9 +40,9 @@ def mock_et():
 def example_files(tmp_path):
     inp_path = tmp_path / "test.inp"
     inp_path.write_text("Dummy INP")
-    ext_path = tmp_path / "test.ext"
+    ext_path = tmp_path / "test.hnx"
     ext_content = (
-        "[INP]\ntest.inp\n"
+        "[PROJECT]\napplication = ppno\nname = Test project\n\n[INP]\ntest.inp\n"
         "[PIPES]\np1 s1\n"
         "[PRESSURES]\nn1 20.0\n"
         "[PIPE_CATALOG]\npipe.cat\n"
@@ -52,20 +52,22 @@ def example_files(tmp_path):
 
 def test_init_all_branches(mock_et, tmp_path):
     # 1. Errors (lines 67, 73)
-    with pytest.raises(FileNotFoundError): Optimization("ghost.ext")
-    ext = tmp_path / "fail.ext"; ext.write_text("[PIPES]\np1 s1\n")
+    with pytest.raises(FileNotFoundError): Optimization("ghost.hnx")
+    ext = tmp_path / "fail.hnx"; ext.write_text(
+        "[PROJECT]\napplication = ppno\nname = Test project\n\n[PIPES]\np1 s1\n"
+    )
     with pytest.raises(ValueError, match="Mandatory \\[INP\\] section is missing"): Optimization(ext)
     
     # 2. Defensive et call (lines 95-96)
     mock_et.ENsetstatusreport.side_effect = Exception("Fail")
-    ext.write_text("[INP]\ntest.inp\n[PIPES]\np1 s1\n[PRESSURES]\nn1 20.0\n[PIPE_CATALOG]\npipe.cat\n")
+    ext.write_text("[PROJECT]\napplication = ppno\nname = Test project\n\n[INP]\ntest.inp\n[PIPES]\np1 s1\n[PRESSURES]\nn1 20.0\n[PIPE_CATALOG]\npipe.cat\n")
     (tmp_path / "test.inp").write_text("")
     Optimization(ext)
 
 def test_options_empty_and_retries(mock_et, tmp_path):
     # Lines 133, 138, 151-152
-    ext = tmp_path / "opt.ext"
-    ext.write_text("[INP]\ntest.inp\n[OPTIONS]\n \n = \nALGORITHMS DE MACO DE UH\nAlgorithm PSO DE\n[PIPE_CATALOG]\npipe.cat\n")
+    ext = tmp_path / "opt.hnx"
+    ext.write_text("[PROJECT]\napplication = ppno\nname = Test project\n\n[INP]\ntest.inp\n[OPTIONS]\n \n = \nALGORITHMS DE MACO DE UH\nAlgorithm PSO DE\n[PIPE_CATALOG]\npipe.cat\n")
     (tmp_path / "test.inp").write_text("")
     opt = Optimization(ext)
     assert opt.max_retries == MAX_RETRIES
@@ -78,11 +80,11 @@ def test_inp_path_can_resolve_from_cwd(mock_et, tmp_path, monkeypatch):
     examples.mkdir(parents=True)
     (examples / "net.inp").write_text("")
     (examples / "pipe.cat").write_text("s1 100.0 0.1 10.0\n")
-    ext = examples / "case.ext"
-    ext.write_text("[INP]\n./examples/net.inp\n[PIPES]\np1 s1\n[PRESSURES]\nn1 20.0\n[PIPE_CATALOG]\npipe.cat\n")
+    ext = examples / "case.hnx"
+    ext.write_text("[PROJECT]\napplication = ppno\nname = Test project\n\n[INP]\n./examples/net.inp\n[PIPES]\np1 s1\n[PRESSURES]\nn1 20.0\n[PIPE_CATALOG]\npipe.cat\n")
 
     monkeypatch.chdir(project)
-    opt = Optimization(Path("examples") / "case.ext")
+    opt = Optimization(Path("examples") / "case.hnx")
     assert opt.inp_file == Path("examples") / "net.inp"
 
 def test_solve_full_logic_coverage(mock_et, example_files):

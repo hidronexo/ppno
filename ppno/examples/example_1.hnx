@@ -1,0 +1,94 @@
+[PROJECT]
+application = ppno
+name = Optimization of the Hanoi Network (Fujiwara & Khang, 1990)
+
+[INP]
+; EPANET .inp model file. Relative paths may be written from the current
+; working directory or from this .hnx file location.
+HAN.inp
+
+[OPTIONS]
+; Optional section. If Algorithm is omitted, PPNO only runs the mandatory
+; Unit Headloss heuristic and FLS-H local refinement.
+; Available algorithms: DE DA NSGA2 MOEAD MACO PSO
+Algorithm NSGA2
+
+[PIPE_CATALOG]
+; Pipe catalog file with group, diameter, roughness and price columns.
+example_1.cat
+
+[PIPES]
+; EPANET pipe ID    pipe-size group
+; Each ID must match a pipe/link ID in the EPANET .inp model.
+; The pipe-size group selects which catalog entries may be assigned to that pipe.
+1    PVC-SDR41
+2    PVC-SDR41
+3    PVC-SDR41
+4    PVC-SDR41
+5    PVC-SDR41
+6    PVC-SDR41
+7    PVC-SDR41
+8    PVC-SDR41
+9    PVC-SDR41
+10    PVC-SDR41
+11    PVC-SDR41
+12    PVC-SDR41
+13    PVC-SDR41
+14    PVC-SDR41
+15    PVC-SDR41
+16    PVC-SDR41
+17    PVC-SDR41
+18    PVC-SDR41
+19    PVC-SDR41
+20    PVC-SDR41
+21    PVC-SDR41
+22    PVC-SDR41
+23    PVC-SDR41
+24    PVC-SDR41
+25    PVC-SDR41
+26    PVC-SDR41
+27    PVC-SDR41
+28    PVC-SDR41
+29    PVC-SDR41
+30    PVC-SDR41
+31    PVC-SDR41
+32    PVC-SDR41
+33    PVC-SDR41
+34    PVC-SDR41
+
+[PRESSURES]
+; EPANET node ID    minimum required pressure
+; Each ID must match a node ID in the EPANET .inp model.
+2    30.0
+3    30.0
+4    30.0
+5    30.0
+6    30.0
+7    30.0
+8    30.0
+9    30.0
+10    30.0
+11    30.0
+12    30.0
+13    30.0
+14    30.0
+15    30.0
+16    30.0
+17    30.0
+18    30.0
+19    30.0
+20    30.0
+21    30.0
+22    30.0
+23    30.0
+24    30.0
+25    30.0
+26    30.0
+27    30.0
+28    30.0
+29    30.0
+30    30.0
+31    30.0
+32    30.0
+
+[END]

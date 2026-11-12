@@ -1,21 +1,21 @@
-[TITLE]
-; Free text title for the optimization case.
-Optimization of the Hanoi Network (Fujiwara & Khang, 1990)
+[PROJECT]
+application = ppno
+name = Optimization of the Balerma Irrigation Network
 
 [INP]
 ; EPANET .inp model file. Relative paths may be written from the current
-; working directory or from this .ext file location.
-./examples/HAN.inp
+; working directory or from this .hnx file location.
+BIN.inp
 
 [OPTIONS]
 ; Optional section. If Algorithm is omitted, PPNO only runs the mandatory
 ; Unit Headloss heuristic and FLS-H local refinement.
 ; Available algorithms: DE DA NSGA2 MOEAD MACO PSO
-Algorithm DE
+Algorithm NSGA2
 
 [PIPE_CATALOG]
 ; Pipe catalog file with group, diameter, roughness and price columns.
-example_1.cat
+example_3.cat
 
 [PIPES]
 ; EPANET pipe ID    pipe-size group
@@ -92,4 +92,3 @@ example_1.cat
 32    30.0
 
 [END]
-

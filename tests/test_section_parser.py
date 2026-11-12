@@ -7,7 +7,7 @@ from ppno.section_parser import SectionParser
 
 @pytest.fixture
 def example_ext_file(tmp_path):
-    path = tmp_path / "test.ext"
+    path = tmp_path / "test.hnx"
     content = """[SECTION1]
 line1
 line2
@@ -45,12 +45,12 @@ def test_read_rows_ignores_comments(tmp_path):
 
 def test_file_not_found():
     with pytest.raises(FileNotFoundError):
-        reader = SectionParser("nonexistent.ext")
+        reader = SectionParser("nonexistent.hnx")
         reader.read()
 
 def test_different_encodings(tmp_path):
     # Test UTF-16
-    path = tmp_path / "utf16.ext"
+    path = tmp_path / "utf16.hnx"
     path.write_text("[SECTION]\nvalue", encoding='utf-16')
     reader = SectionParser(path)
     sections = reader.read()
